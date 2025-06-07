@@ -1,0 +1,26 @@
+{
+    "files.associations": {
+        "rce_types.h": "c",
+        "fcntl.h": "c",
+        "string.h": "c",
+        "stdlib.h": "c",
+        "getopt.h": "c",
+        "chrono": "c",
+        "thread": "c",
+        "rce_defines.h": "c",
+        "stdio.h": "c",
+        "rce_enc.h": "c",
+        "ostream": "c",
+        "rce_cam.h": "c",
+        "signal.h": "c",
+        "iterator": "c",
+        "xhash": "c",
+        "xmemory": "c",
+        "xtree": "c",
+        "xlocale": "c",
+        "xstring": "c",
+        "video.h": "c",
+        "rce_config.h": "c"
+    },
+    "idf.pythonInstallPath": "d:\\Espressif\\tools\\tools\\idf-python\\3.11.2\\python.exe"
+}

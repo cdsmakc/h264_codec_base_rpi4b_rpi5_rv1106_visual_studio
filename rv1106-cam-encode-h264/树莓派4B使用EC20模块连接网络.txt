@@ -1,0 +1,84 @@
+1. 使用网上买来的EC20 4G模块，USB接口的。
+2. 注意事项：Main天线连接即可，最好竖起来，保证信号。
+3. 使用USB连接4G模块。事先将SIM卡插入4G模块，注意缺口朝外（SIM卡插槽没有防呆设计，缺口朝内也能插进去）。
+4. 稍等，灯闪烁。
+5. 检查设备是否被树莓派识别。
+    5.1 使用 “ls /dev/” 查看是否有 ttyUSB0 ~ ttyUSB3 四个设备。正常应该有该4个设备。
+    5.2 使用 “lsusb” 查看USB设备，应该能看到EC20的相关信息：
+        Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+        Bus 001 Device 004: ID 2c7c:0125 Quectel Wireless Solutions Co., Ltd. EC25 LTE modem       <-----
+        Bus 001 Device 002: ID 2109:3431 VIA Labs, Inc. Hub
+        Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+    5.3 使用命令 “lsmod” 查看驱动加载信息。应该有如下2项：
+        usb_wwan               20480  1 option
+        usbserial              40960  8 usb_wwan,option
+6. 使用命令“sudo apt-get install wvdial”， 安装wvdial软件。注意确保安装正确（考虑软件源和网络质量）。
+7. 使用命令“sudo nano /etc/wvdial.conf ”，修改拨号配置文件。
+    7.1 我使用的电信卡。据网上说，移动卡和电信卡是一样的，都填写如下内容。注意：“let1”这个字符串可以修改。这是个名字，后面拨号时要用到。
+        [Dialer let1]
+        Init1 = ATZ
+        Init2 = ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0
+        Modem Type = Analog Modem
+        Baud = 9600
+        New PPPD = yes
+        Modem = /dev/ttyUSB2
+        ISDN = 0
+        Phone = *99#
+        Password = card
+        Username = card
+    7.2 如果是联通卡，按如下填写
+        [Dialer lan1]
+        Init1 = ATZ
+        Init2 = ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0
+        Init3 = at+cgdcont=1,"ip","uninet"              #<------- 增加这一句
+        Modem Type = Analog Modem
+        Baud = 9600
+        New PPPD = yes
+        Modem = /dev/ttyUSB2
+        ISDN = 0
+        Phone = *99#
+        Password = card
+        Username = card
+8. 使用命令“ sudo wvdial let1”拨号。我第一次拨号失败了。调整天线位置，然后再执行。拨号就成功了。成功的大致信息如下：
+        --> WvDial: Internet dialer version 1.61
+        --> Initializing modem.
+        --> Sending: ATZ
+        ATZ
+        OK
+        --> Sending: ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0
+        ATQ0 V1 E1 S0=0 &C1 &D2 +FCLASS=0
+        OK
+        --> Modem initialized.
+        --> Sending: ATDT*99#
+        --> Waiting for carrier.
+        ATDT*99#
+        CONNECT 150000000
+        --> Carrier detected.  Waiting for prompt.
+        --> Don't know what to do!  Starting pppd and hoping for the best.
+        --> Starting pppd at Sat May  3 19:57:22 2025
+        --> Pid of pppd: 1873
+        --> Using interface ppp0
+        --> local  IP address 100.90.129.69
+        --> remote IP address 10.64.64.64
+        --> primary   DNS address 202.101.172.37
+        --> secondary DNS address 202.101.173.157
+9. 拨号成功，此时终端会阻塞在这里。可以开另外一个终端，查看网络信息。
+10. 使用命令“route -n”查看路由信息：
+        Kernel IP routing table
+        Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+        0.0.0.0         192.168.225.1   0.0.0.0         UG    101    0        0 usb0
+        0.0.0.0         192.168.0.1     0.0.0.0         UG    600    0        0 wlan0
+        10.64.64.64     0.0.0.0         255.255.255.255 UH    0      0        0 ppp0      <---- 这里
+        192.168.0.0     0.0.0.0         255.255.255.0   U     600    0        0 wlan0
+        192.168.225.0   0.0.0.0         255.255.255.0   U     101    0        0 usb0
+11. 使用命令“ifconfig”查看网络接口设备，会得到如下信息：
+        ppp0: flags=4305<UP,POINTOPOINT,RUNNING,NOARP,MULTICAST>  mtu 1500
+                inet 100.90.129.69  netmask 255.255.255.255  destination 10.64.64.64
+                inet6 240e:471:8a0:84e:e95c:c2b7:6776:248c  prefixlen 64  scopeid 0x0<global>
+                inet6 fe80::e95c:c2b7:6776:248c  prefixlen 128  scopeid 0x20<link>
+                ppp  txqueuelen 3  (Point-to-Point Protocol)
+                RX packets 9  bytes 248 (248.0 B)
+                RX errors 0  dropped 0  overruns 0  frame 0
+                TX packets 11  bytes 219 (219.0 B)
+                TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+12. 这里有ipv6地址。但是网上无法ping通。还没有研究。
