@@ -26,18 +26,8 @@ CODE_SECTION("==========================") ;
 /* 摄像头设备 */
 #define RCE_CAM_CAMERA_DEVICE               (                          "/dev/video0")
 
-/* 输出图像大小与帧率 */
-#define RCE_CAM_CAMERA_RESOLUTION_WIDTH     RCE_CAMERA_RESOLUTION_WIDTH
-#define RCE_CAM_CAMERA_RESOLUTION_HEIGHT    RCE_CAMERA_RESOLUTION_HEIGHT
-#define RCE_CAM_CAMERA_RESOLUTION_PIXELS    ( RCE_CAM_CAMERA_RESOLUTION_WIDTH * RCE_CAM_CAMERA_RESOLUTION_HEIGHT)
-
-#define RCE_CAM_CAMERA_OUTPUT_FPS           RCE_CAMERA_FPS
-
 /* 图像缓存块数 */
 #define RCE_CAM_CAMERA_ALLOCATE_BUFFER_NUM  (                                     8u)
-
-/* 帧缓存大小 */
-#define RCE_CAM_FRAME_BUFFER_SIZE           (RCE_CAM_CAMERA_RESOLUTION_PIXELS + RCE_CAM_CAMERA_RESOLUTION_PIXELS /2) /* YUV420每个像素1.5字节 */
 
 CODE_SECTION("==========================") ;
 CODE_SECTION("==  模块枚举类型定义    ==") ;

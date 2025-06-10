@@ -15,6 +15,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include "RCE_types.h"
+
 /*
  * 注意事项：
  * 1. 1080P分辨率，需要调节GPU内存划分。否则VIDIOC_STREAMON指令会报错。修改/boot/firmware/config.txt文件，增加至128M，或者更大（有说超过256M会出问题）。
@@ -48,43 +50,54 @@ extern "C" {
  *      参考文档https://picamera.readthedocs.io/en/release-1.13/fov.html
  */
 
-/* 图像宽度 */
-#define RCE_CAMERA_RESOLUTION_WIDTH              (                        1280u)  
+/* ini配置文件 */
+#define RCE_CONFIG_FILE              ("./RCE_config.ini")
 
-/* 图像高度*/
-#define RCE_CAMERA_RESOLUTION_HEIGHT             (                         720u)
+/* 全局配置信息 */
+typedef struct tagRCE_CONFIG
+{
+    /* 图像信息 */
+    USHORT usWidth ;        /* 图像宽度 */           /* 缺省值1280              */
+    USHORT usHeight ;       /* 图像高度 */           /* 缺省值720               */
+    UINT   uiFps ;          /* 图像帧率 */           /* 缺省值30                */
 
-/* 图像帧率 */
-#define RCE_CAMERA_FPS                           (                          60u)
+    /* 编码器设置 */
+    UINT   uiHWEncoder ;    /* 是否使用硬件编码器。0：使用软件编码；1：使用硬件编码 */ /* 缺省值1，使用硬件编码器 */
+    UINT   uiHWBitrate ;    /* 设置硬件编码时的输出码率 */
+    
+    /* 输出文件设置 */
+    UINT   uiWrToFile ;     /* 是否写入到文件。0：不写入文件；1：写入文件 */ /* 缺省值0，不写入文件 */
+    CHAR   acFile[128] ;    /* 文件名 */
 
-/* 是否使用硬件编码 */
-#define RCE_USE_HARDWARE_ENCODER                 (                           1u)
+    /* 网络设置 */
+    CHAR   acLocalIp[64] ;  /* 本地IP */
+    USHORT usLocalPort ;    /* 本地端口 */
 
-/* CAM输出格式，勿修改 */
-#if 1 == RCE_USE_HARDWARE_ENCODER
-#define RCE_CAMERA_PIX_FMT                       (            V4L2_PIX_FMT_H264)
-#else
-#define RCE_CAMERA_PIX_FMT                       (          V4L2_PIX_FMT_YUV420)
-#endif
+    CHAR   acRemoteIp[64] ; /* 远端IP */
+    USHORT usRemotePort ;   /* 远端端口 */
+} RCE_CONFIG_S ;
 
-/* 编码结果是否保存为文件 */
-#define RCE_H264_TO_FILE                         (                           0u)
 
-/* 保存文件名，勿修改 */
-#if 1 == RCE_H264_TO_FILE
-#if 1 == RCE_USE_HARDWARE_ENCODER
-#define RCE_H264_FILE_NAME                       (                  "H-ENC.264")
-#else
-#define RCE_H264_FILE_NAME                       (                  "S-ENC.264")
-#endif
-#endif
+/*********************************************************
+ * 缺省配置
+ *********************************************************/
+/* 图像宽度、高度、帧率缺省值 */
+#define RCE_CAMERA_RESOLUTION_WIDTH_DEFAULT      (                        1280u)  
+#define RCE_CAMERA_RESOLUTION_HEIGHT_DEFAULT     (                         720u)
+#define RCE_CAMERA_FPS_DEFAULT                   (                          60u)
 
-/* 通信配置 */
-#define RCE_LOCAL_IP                             (              "192.168.3.101")    /* 本地IP地址 */
-#define RCE_LOCAL_PORT                           (                       12001u)    /* 本地端口号 */
+/* 保存文件名缺省值 */
+#define RCE_H264_FILE_NAME_DEFAULT               (                    "enc.264")
 
-#define RCE_REMOTE_IP                            (              "192.168.3.100")    /* 远端IP地址 */
-#define RCE_REMOTE_PORT                          (                       12000u)    /* 远端端口号 */
+/* 硬件编码输出码率缺省值 */
+#define RCE_H264_HW_BITRATE                      (                     2000000u)
+
+/* 通信配置缺省值 */
+#define RCE_LOCAL_IP_DEFAULT                     (              "192.168.3.101")    /* 本地IP地址 */
+#define RCE_LOCAL_PORT_DEFAULT                   (                       12001u)    /* 本地端口号 */
+
+#define RCE_REMOTE_IP_DEFAULT                    (              "192.168.3.100")    /* 远端IP地址 */
+#define RCE_REMOTE_PORT_DEFAULT                  (                       12000u)    /* 远端端口号 */
 
 /* 统计间隔时间 */
 #define RCE_STATISTIC_PERIOD_USEC                (                      250000u)

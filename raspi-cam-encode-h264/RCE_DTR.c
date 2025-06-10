@@ -47,6 +47,9 @@ RCE_DTR_WORKAREA_S  g_stDTRWorkarea ;
 /* 待发送数据缓存 */
 RCE_DTR_FIFO_S      g_stDTRSendBuf ;
 
+/* 配置信息 */
+extern RCE_CONFIG_S g_stRCEConfig ;
+
 CODE_SECTION("==========================") ;
 CODE_SECTION("==  模块内部函数        ==") ;
 CODE_SECTION("==========================") ;
@@ -209,10 +212,10 @@ INT __RCE_DTR_BindLocal(VOID)
     struct sockaddr_in  stLocalSockAddr ;
     int                 iRetVal = 0 ;
 
-    uiIPAddr                        = inet_addr(RCE_LOCAL_IP) ;
+    uiIPAddr                        = inet_addr(g_stRCEConfig.acLocalIp) ;
     stLocalSockAddr.sin_family      = AF_INET ;
     stLocalSockAddr.sin_addr.s_addr = uiIPAddr ;
-    stLocalSockAddr.sin_port        = htons(RCE_LOCAL_PORT) ;
+    stLocalSockAddr.sin_port        = htons(g_stRCEConfig.usLocalPort) ;
 
     iRetVal = bind(g_stDTRWorkarea.iSocket, (struct sockaddr *)&stLocalSockAddr, sizeof(stLocalSockAddr));
 
@@ -243,10 +246,10 @@ INT __RCE_DTR_BindRemote(VOID)
     struct sockaddr_in  stRemoteSockAddr ;
     int                 iRetVal = 0 ;
 
-    uiIPAddr                         = inet_addr(RCE_REMOTE_IP) ;
+    uiIPAddr                         = inet_addr(g_stRCEConfig.acRemoteIp) ;
     stRemoteSockAddr.sin_family      = AF_INET ;
     stRemoteSockAddr.sin_addr.s_addr = uiIPAddr ;
-    stRemoteSockAddr.sin_port        = htons(RCE_REMOTE_PORT) ;
+    stRemoteSockAddr.sin_port        = htons(g_stRCEConfig.usRemotePort) ;
 
     iRetVal = connect(g_stDTRWorkarea.iSocket, (struct sockaddr *)&stRemoteSockAddr, sizeof(stRemoteSockAddr)) ;
 

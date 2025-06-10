@@ -7,20 +7,27 @@ rm -rf RCE_ENC.o
 rm -rf RCE_ENC.d
 rm -rf RCE_DTR.o
 rm -rf RCE_DTR.d
+rm -rf dictionary.o
+rm -rf dictionary.d
+rm -rf iniparser.o
+rm -rf iniparser.d
 rm -rf RCE.o
 rm -rf RCE.d
 
-gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I. -I. -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
--c RCE_ENC.c -o RCE_ENC.o -MMD -MF RCE_ENC.d
-gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I. -I. -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
+gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I. -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
 -c RCE_CAM.c -o RCE_CAM.o -MMD -MF RCE_CAM.d
-gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I. -I. -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
+gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I. -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
+-c RCE_ENC.c -o RCE_ENC.o -MMD -MF RCE_ENC.d
+gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I. -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
 -c RCE_DTR.c -o RCE_DTR.o -MMD -MF RCE_DTR.d
-
-gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I. -I. -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
+gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I. -I./iniparser-4.1/src/ -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
 -c RCE.c -o RCE.o -MMD -MF RCE.d
+gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I./iniparser-4.1/src/ -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
+-c ./iniparser-4.1/src/dictionary.c -o dictionary.o -MMD -MF dictionary.d
+gcc -lpthread -Wno-maybe-uninitialized -Wshadow -O3 -ffast-math -Wall -I./iniparser-4.1/src/ -std=gnu99 -D_GNU_SOURCE -fomit-frame-pointer -fno-tree-vectorize -fvisibility=hidden  \
+-c ./iniparser-4.1/src/iniparser.c -o iniparser.o -MMD -MF iniparser.d
 
-gcc -o rce RCE.o RCE_CAM.o RCE_ENC.o RCE_DTR.o ./x264-master/libx264.a -lm -lpthread -ldl
+gcc -o rce RCE.o RCE_CAM.o RCE_ENC.o RCE_DTR.o dictionary.o iniparser.o ./x264-master/libx264.a -lm -lpthread -ldl
 
 rm -rf RCE_CAM.o
 rm -rf RCE_CAM.d
@@ -28,6 +35,9 @@ rm -rf RCE_ENC.o
 rm -rf RCE_ENC.d
 rm -rf RCE_DTR.o
 rm -rf RCE_DTR.d
+rm -rf dictionary.o
+rm -rf dictionary.d
+rm -rf iniparser.o
+rm -rf iniparser.d
 rm -rf RCE.o
 rm -rf RCE.d
-

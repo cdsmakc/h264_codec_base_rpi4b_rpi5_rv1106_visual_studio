@@ -60,14 +60,17 @@ STATIC VOID        *g_apvBufferAddr[RCE_CAM_CAMERA_ALLOCATE_BUFFER_NUM] ; /* 8 x
 STATIC UINT         g_auiBufferSize[RCE_CAM_CAMERA_ALLOCATE_BUFFER_NUM] ; /* 4 x RCE_CAM_CAMERA_ALLOCATE_BUFFER_NUM Byte */
 
 /* 待编码缓存区 */
-UCHAR               g_aucFrameBuffer[RCE_CAM_FRAME_BUFFER_SIZE] ;
+UCHAR              *g_pucFrameBuffer ;
 UINT                g_uiFrameBufferValid = 0 ;
+
+/* 配置信息 */
+extern RCE_CONFIG_S g_stRCEConfig ;
 
 CODE_SECTION("==========================") ;
 CODE_SECTION("==  模块内部函数        ==") ;
 CODE_SECTION("==========================") ;
 
-#if 1 == RCE_H264_TO_FILE && 1 == RCE_USE_HARDWARE_ENCODER
+
 /*******************************************************************************
 - Function    : __RCE_CAM_Open264File
 - Description : 本函数打开输出文件。
@@ -80,13 +83,16 @@ CODE_SECTION("==========================") ;
 *******************************************************************************/
 INT __RCE_CAM_Open264File(VOID)
 {
-    g_stCAMWorkarea.iStoreFile = open(RCE_H264_FILE_NAME, O_RDWR | O_CREAT | O_TRUNC , 0777) ;
-    
-    if(-1 == g_stCAMWorkarea.iStoreFile)
+    if(0 != g_stRCEConfig.uiWrToFile)
     {
-        printf("File %s, func %s, line %d : Can not open file %s.\n", __FILE__, __func__, __LINE__, RCE_H264_FILE_NAME) ;
+        g_stCAMWorkarea.iStoreFile = open(g_stRCEConfig.acFile, O_RDWR | O_CREAT | O_TRUNC , 0777) ;
+        
+        if(-1 == g_stCAMWorkarea.iStoreFile)
+        {
+            printf("File %s, func %s, line %d : Can not open file %s.\n", __FILE__, __func__, __LINE__, g_stRCEConfig.acFile) ;
 
-        return -1;
+            return -1;
+        }
     }
 
     return 0 ;
@@ -104,11 +110,14 @@ INT __RCE_CAM_Open264File(VOID)
 *******************************************************************************/
 INT __RCE_CAM_Close264File(VOID)
 {
-    close(g_stCAMWorkarea.iStoreFile) ;
+    if(0 != g_stRCEConfig.uiWrToFile)
+    {
+        close(g_stCAMWorkarea.iStoreFile) ;
+    }
 
     return 0 ;
 }
-#endif /* 1 == RCE_H264_TO_FILE && 1 == RCE_USE_HARDWARE_ENCODER */
+
 
 /*******************************************************************************
 - Function    : __RCE_CAM_OpenCamera
@@ -270,8 +279,8 @@ INT __RCE_CAM_GCP_QueryCameraResolution(VOID)
 
     /* 获取并打印摄像头支持的分辨率*/
     stFrameSize.index        = 0 ;
-    stFrameSize.pixel_format = RCE_CAMERA_PIX_FMT ;
-    
+    stFrameSize.pixel_format = (0 == g_stRCEConfig.uiHWEncoder) ? V4L2_PIX_FMT_YUV420 : V4L2_PIX_FMT_H264 ;
+
     printf("--Frame resolution descriptor ----------------------------\n") ;
     
     while(1)
@@ -373,10 +382,10 @@ INT __RCE_CAM_SCP_SetCameraResolution(VOID)
 
     /* 设置输出格式 */
     stFormat.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE ;
-    stFormat.fmt.pix.width       = RCE_CAMERA_RESOLUTION_WIDTH ;
-    stFormat.fmt.pix.height      = RCE_CAMERA_RESOLUTION_HEIGHT ;
-    stFormat.fmt.pix.pixelformat = RCE_CAMERA_PIX_FMT ;
-    
+    stFormat.fmt.pix.width       = g_stRCEConfig.usWidth ;
+    stFormat.fmt.pix.height      = g_stRCEConfig.usHeight ;
+    stFormat.fmt.pix.pixelformat = (0 == g_stRCEConfig.uiHWEncoder) ? V4L2_PIX_FMT_YUV420 : V4L2_PIX_FMT_H264 ;
+
     iRetVal = ioctl(g_stCAMWorkarea.iCameraFile, VIDIOC_S_FMT, &stFormat) ;
 
     if(-1 == iRetVal) 
@@ -459,7 +468,7 @@ INT __RCE_CAM_SCP_SetCameraFPS(VOID)
 
     /* 修改FPS */
     stStreamParm.parm.capture.timeperframe.numerator   = 1 ;
-    stStreamParm.parm.capture.timeperframe.denominator = RCE_CAM_CAMERA_OUTPUT_FPS ;
+    stStreamParm.parm.capture.timeperframe.denominator = g_stRCEConfig.uiFps ;
 
     iRetVal = ioctl(g_stCAMWorkarea.iCameraFile, VIDIOC_S_PARM, &stStreamParm) ;
 
@@ -524,6 +533,43 @@ INT __RCE_CAM_SetCameraParam(VOID)
     return 0 ;
 }
 
+/*******************************************************************************
+- Function    : __RCE_CAM_SetRCParams
+- Description : 本函数设置硬件编码码率。
+- Input       : VOID
+- Output      : NULL
+- Return      : INT
+                    0  : success.
+                    -1 : fail.
+- Others      :
+*******************************************************************************/
+INT __RCE_CAM_SetRCParams(VOID)
+{
+    struct v4l2_ext_controls stExtCtrls ;
+    struct v4l2_ext_control  stExtCtrl ;
+    INT                      iRetVal ;
+
+    memset(&stExtCtrls, 0, sizeof(stExtCtrls)) ;
+    memset(&stExtCtrl, 0, sizeof(stExtCtrl)) ;
+
+    stExtCtrl.id          = V4L2_CID_MPEG_VIDEO_BITRATE ;
+    stExtCtrl.value       = g_stRCEConfig.uiHWBitrate ;
+    stExtCtrl.size        = 0 ;
+    stExtCtrls.controls   = &stExtCtrl ;
+    stExtCtrls.count      = 1 ;
+    stExtCtrls.ctrl_class = V4L2_CTRL_CLASS_MPEG ;
+
+    iRetVal = ioctl(g_stCAMWorkarea.iCameraFile, VIDIOC_S_EXT_CTRLS, &stExtCtrls) ;
+
+    if(-1 == iRetVal)
+    {
+        printf("File %s, func %s, line %d : ioctl VIDIOC_S_EXT_CTRLS error. ioctl : %s.\n", __FILE__, __func__, __LINE__, strerror(errno)) ;
+
+        return -1 ;
+    }
+
+    return 0 ;
+}
 
 /*******************************************************************************
 - Function    : __RCE_CAM_RequestBuffers
@@ -798,31 +844,36 @@ INT __RCE_CAM_PCD_PrcessFrame(VOID)
         /* 统计：更新接收帧数 */
         g_stCAMWorkarea.stStatistics.uiFrameCountFromCamera++ ;
 
-#if 1 != RCE_USE_HARDWARE_ENCODER
-        /* 软编码，数据发送给ENC */
-        if(0 == g_uiFrameBufferValid)
+        if(0 == g_stRCEConfig.uiHWEncoder)
         {
-            /* 复制图像 */
-            memcpy(g_aucFrameBuffer, g_apvBufferAddr[stBuf.index], stBuf.bytesused) ;
+            /* 软编码，数据发送给ENC */
+            if(0 == g_uiFrameBufferValid)
+            {
+                /* 复制图像 */
+                memcpy(g_pucFrameBuffer, g_apvBufferAddr[stBuf.index], stBuf.bytesused) ;
 
-            /* 设置标记，等待编码完成 */
-            g_uiFrameBufferValid = 1 ;
+                /* 设置标记，等待编码完成 */
+                g_uiFrameBufferValid = 1 ;
 
-            /* 统计：更新发送到编码器的帧数 */
-            g_stCAMWorkarea.stStatistics.uiFrameCountToEncoder++ ;
+                /* 统计：更新发送到编码器的帧数 */
+                g_stCAMWorkarea.stStatistics.uiFrameCountToEncoder++ ;
+            }
+            else
+            {
+                /* 上一帧未编码完成，丢弃这一帧 */
+            }
         }
         else
         {
-            /* 上一帧未编码完成，丢弃这一帧 */
+            /* 硬编码，直接从驱动获取H264数据 */
+            /* 将数据发送给DTR */
+            RCE_DTR_PushFIFO(g_apvBufferAddr[stBuf.index], stBuf.bytesused) ;
+
+            if(0 != g_stRCEConfig.uiWrToFile)
+            {
+                write(g_stCAMWorkarea.iStoreFile, g_apvBufferAddr[stBuf.index], stBuf.bytesused) ;
+            }
         }
-#else
-        /* 硬编码，直接从驱动获取H264数据 */
-#if 1 == RCE_H264_TO_FILE
-        write(g_stCAMWorkarea.iStoreFile, g_apvBufferAddr[stBuf.index], stBuf.bytesused) ;
-#endif /* 1 == RCE_H264_TO_FILE */
-        /* 将数据发送给DTR */
-        RCE_DTR_PushFIFO(g_apvBufferAddr[stBuf.index], stBuf.bytesused) ;
-#endif /* 1 != RCE_USE_HARDWARE_ENCODER */
 
         /* 统计：更新接受到的数据量 */
         g_stCAMWorkarea.stStatistics.ui64DataCountFromCamera += stBuf.bytesused ;
@@ -943,24 +994,18 @@ VOID *RCE_CAM_Thread(VOID *pvArgs)
     /* 指示线程正在运行 */
     g_stCAMWorkarea.enThreadStatus = CAM_THREAD_STATUS_RUN ;
 
-#if 1 == RCE_H264_TO_FILE && 1 == RCE_USE_HARDWARE_ENCODER
     if(0 != __RCE_CAM_Open264File())
     {
         /* 打开存储文件失败，退出线程 */
         goto LABEL_EXIT_WITH_NO_PROCESS ;
     }
-#endif /* 1 == RCE_H264_TO_FILE && 1 == RCE_USE_HARDWARE_ENCODER */
 
     /* 打开摄像头设备 */
     if(0 != __RCE_CAM_OpenCamera())
     {
         /* 打开摄像头失败，退出线程 */
         g_stCAMWorkarea.enThreadStatus = CAM_THREAD_STATUS_EXIT ;
-#if 1 == RCE_H264_TO_FILE && 1 == RCE_USE_HARDWARE_ENCODER
         goto LABEL_EXIT_WITH_CLOSE_FILE ;
-#else
-        goto LABEL_EXIT_WITH_NO_PROCESS ;
-#endif /* #if 1 == RCE_H264_TO_FILE && 1 == RCE_USE_HARDWARE_ENCODER */
     }
         
     /* 获取摄像头参数 */
@@ -993,6 +1038,15 @@ VOID *RCE_CAM_Thread(VOID *pvArgs)
         /* 映射失败，退出线程 */
         g_stCAMWorkarea.enThreadStatus = CAM_THREAD_STATUS_EXIT ;
         goto LABEL_EXIT_WITH_CLOSE_DEVICE ;
+    }
+
+    /* 设置码率 */
+    if(1 == g_stRCEConfig.uiHWEncoder)
+    {
+        if(0 != __RCE_CAM_SetRCParams())
+        {
+            goto LABEL_EXIT_WITH_MUNMAP ;
+        }
     }
 
     /* 启动图像输出 */
@@ -1034,10 +1088,8 @@ LABEL_EXIT_WITH_MUNMAP :
     __RCE_CAM_UnmapBuffers() ;
 LABEL_EXIT_WITH_CLOSE_DEVICE :
     __RCE_CAM_CloseCamera() ;
-#if 1 == RCE_H264_TO_FILE && 1 == RCE_USE_HARDWARE_ENCODER
 LABEL_EXIT_WITH_CLOSE_FILE :
     __RCE_CAM_Close264File() ;
-#endif /* 1 == RCE_H264_TO_FILE && 1 == RCE_USE_HARDWARE_ENCODER */
 LABEL_EXIT_WITH_NO_PROCESS :
     pthread_exit(NULL);
 }

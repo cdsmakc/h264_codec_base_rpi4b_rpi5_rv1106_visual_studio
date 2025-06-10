@@ -46,7 +46,6 @@ CODE_SECTION("==========================") ;
 #include "RCE_ENC.h"
 #include "RCE_DTR.h"
 
-#if 1 != RCE_USE_HARDWARE_ENCODER
 CODE_SECTION("==========================") ;
 CODE_SECTION("==  模块全局变量        ==") ;
 CODE_SECTION("==========================") ;
@@ -62,14 +61,16 @@ STATIC x264_nal_t       *g_pstNAL ;
 STATIC x264_picture_t    g_stPicOut ;
 
 /* 来自CAM模块 */
-extern UCHAR             g_aucFrameBuffer[RCE_CAM_FRAME_BUFFER_SIZE] ;
+extern UCHAR            *g_pucFrameBuffer ;
 extern UINT              g_uiFrameBufferValid ;
+
+/* 配置信息 */
+extern RCE_CONFIG_S      g_stRCEConfig ;
 
 CODE_SECTION("==========================") ;
 CODE_SECTION("==  模块内部函数        ==") ;
 CODE_SECTION("==========================") ;
 
-#if 1 == RCE_H264_TO_FILE
 /*******************************************************************************
 - Function    : __RCE_ENC_Open264File
 - Description : 本函数打开输出文件。
@@ -82,13 +83,16 @@ CODE_SECTION("==========================") ;
 *******************************************************************************/
 INT __RCE_ENC_Open264File(VOID)
 {
-    g_stENCWorkarea.iStoreFile = open(RCE_H264_FILE_NAME, O_RDWR | O_CREAT | O_TRUNC , 0777) ;
-    
-    if(-1 == g_stENCWorkarea.iStoreFile)
+    if(1 == g_stRCEConfig.uiWrToFile)
     {
-        printf("File %s, func %s, line %d : Can not open file %s.\n", __FILE__, __func__, __LINE__, RCE_H264_FILE_NAME) ;
+        g_stENCWorkarea.iStoreFile = open(g_stRCEConfig.acFile, O_RDWR | O_CREAT | O_TRUNC , 0777) ;
+        
+        if(-1 == g_stENCWorkarea.iStoreFile)
+        {
+            printf("File %s, func %s, line %d : Can not open file %s.\n", __FILE__, __func__, __LINE__, g_stRCEConfig.acFile) ;
 
-        return -1;
+            return -1;
+        }        
     }
 
     return 0 ;
@@ -106,11 +110,14 @@ INT __RCE_ENC_Open264File(VOID)
 *******************************************************************************/
 INT __RCE_ENC_Close264File(VOID)
 {
-    close(g_stENCWorkarea.iStoreFile) ;
+    if(1 == g_stRCEConfig.uiWrToFile)
+    {
+        close(g_stENCWorkarea.iStoreFile) ;
+    }
 
     return 0 ;
 }
-#endif /* if 1 == RCE_H264_TO_FILE */
+
 
 /*******************************************************************************
 - Function    : __RCE_ENC_ConfigEncoder
@@ -134,8 +141,8 @@ INT __RCE_ENC_ConfigEncoder(VOID)
 
     g_stParam.i_bitdepth       = 8 ;
     g_stParam.i_csp            = X264_CSP_I420 ;
-    g_stParam.i_width          = RCE_CAMERA_RESOLUTION_WIDTH ;
-    g_stParam.i_height         = RCE_CAMERA_RESOLUTION_HEIGHT ;
+    g_stParam.i_width          = g_stRCEConfig.usWidth ;
+    g_stParam.i_height         = g_stRCEConfig.usHeight ;
     g_stParam.b_vfr_input      = 0 ;
     g_stParam.b_repeat_headers = 1 ;
     g_stParam.b_annexb         = 1 ;
@@ -292,35 +299,31 @@ CODE_SECTION("==========================") ;
 *******************************************************************************/
 VOID *RCE_ENC_Thread(VOID *pvArgs)
 {
-    size_t             szLumaSize   = RCE_CAMERA_RESOLUTION_WIDTH * RCE_CAMERA_RESOLUTION_HEIGHT ; 
+    size_t             szLumaSize   = g_stRCEConfig.usWidth * g_stRCEConfig.usHeight ; 
     size_t             szChromaSize = szLumaSize / 4 ;
     int                iEncodeSize ;
     int                iNALCtr ;
-    void              *pvLumaPtr    = (VOID *)&g_aucFrameBuffer[0] ; /* Y 分量起始位置 */
+    void              *pvLumaPtr    = (VOID *)g_pucFrameBuffer ;     /* Y 分量起始位置 */
     void              *pvChroma1Ptr = pvLumaPtr + szLumaSize ;       /* U 分量起始位置 */
     void              *pvChroma2Ptr = pvChroma1Ptr + szChromaSize ;  /* V 分量起始位置 */
 
     g_stENCWorkarea.enThreadStatus = ENC_THREAD_STATUS_RUN ;
 
     /* 打开输出文件 */
-#if 1 == RCE_H264_TO_FILE
+
     if(-1 == __RCE_ENC_Open264File())
     {
         /* 打开输出文件失败，退出 */
         g_stENCWorkarea.enThreadStatus = ENC_THREAD_STATUS_EXIT ;
         goto LABEL_EXIT_WITH_NO_PROCESS ;
     }
-#endif
+
     /* 配置编码器 */
     if(0 != __RCE_ENC_ConfigEncoder())
     {
         /* 配置编码器失败，退出线程 */
         g_stENCWorkarea.enThreadStatus = ENC_THREAD_STATUS_EXIT ;
-#if 1 == RCE_H264_TO_FILE
         goto LABEL_EXIT_WITH_CLOSE_FILE ;
-#else
-    goto LABEL_EXIT_WITH_NO_PROCESS ;
-#endif 
     }
 
     /* 申请Picture空间 */
@@ -328,11 +331,7 @@ VOID *RCE_ENC_Thread(VOID *pvArgs)
     {
         /* 配置Picture空间失败，退出线程 */
         g_stENCWorkarea.enThreadStatus = ENC_THREAD_STATUS_EXIT ;
-#if 1 == RCE_H264_TO_FILE
         goto LABEL_EXIT_WITH_CLOSE_FILE ;
-#else
-    goto LABEL_EXIT_WITH_NO_PROCESS ;
-#endif 
     }
 
     /* 启动编码器 */
@@ -345,7 +344,7 @@ VOID *RCE_ENC_Thread(VOID *pvArgs)
 
     while(1)
     {
-        usleep(1000) ;
+        usleep(100) ;
 
         if(1 == g_uiFrameBufferValid)
         {
@@ -370,9 +369,11 @@ VOID *RCE_ENC_Thread(VOID *pvArgs)
             }
             else if(0 < iEncodeSize)
             {
-#if 1 == RCE_H264_TO_FILE
-                write(g_stENCWorkarea.iStoreFile, g_pstNAL->p_payload, iEncodeSize) ;
-#endif
+                if(1 == g_stRCEConfig.uiWrToFile)
+                {
+                    write(g_stENCWorkarea.iStoreFile, g_pstNAL->p_payload, iEncodeSize) ;                    
+                }
+
                 /* 将数据发送给DTR */
                 RCE_DTR_PushFIFO(g_pstNAL->p_payload, iEncodeSize) ;
 
@@ -402,9 +403,11 @@ VOID *RCE_ENC_Thread(VOID *pvArgs)
                 }
                 else if(0 < iEncodeSize)
                 {
-#if 1 == RCE_H264_TO_FILE
-                    write(g_stENCWorkarea.iStoreFile, g_pstNAL->p_payload, iEncodeSize) ;
-#endif
+                    if(1 == g_stRCEConfig.uiWrToFile)
+                    {
+                        write(g_stENCWorkarea.iStoreFile, g_pstNAL->p_payload, iEncodeSize) ;                    
+                    }
+                    
                     /* 将数据发送给DTR */
                     RCE_DTR_PushFIFO(g_pstNAL->p_payload, iEncodeSize) ;
 
@@ -423,14 +426,12 @@ LABEL_EXIT_WITH_CLOSE_ENCODER :
     __RCE_ENC_CloseEncoder() ;
 LABEL_EXIT_WITH_CLEAN_PICTURE :
     __RCE_ENC_CleanPicture() ;
-#if 1 == RCE_H264_TO_FILE
 LABEL_EXIT_WITH_CLOSE_FILE :
     __RCE_ENC_Close264File() ;
-#endif
 LABEL_EXIT_WITH_NO_PROCESS :
     pthread_exit(NULL);
 }
-#endif /* 1 != RCE_USE_HARDWARE_ENCODER */
+
 
 #ifdef __cplusplus
 }

@@ -18,7 +18,6 @@ extern "C" {
 
 #include "RCE_types.h"
 
-#if 1 != RCE_USE_HARDWARE_ENCODER
 
 CODE_SECTION("==========================") ;
 CODE_SECTION("==  模块宏定义          ==") ;
@@ -92,7 +91,6 @@ CODE_SECTION("==========================") ;
 
 VOID *RCE_ENC_Thread(VOID *pvArgs) ;
 
-#endif /* 1 != RCE_USE_HARDWARE_ENCODER */
 
 #ifdef __cplusplus
 }
