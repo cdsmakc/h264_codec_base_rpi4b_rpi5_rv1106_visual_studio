@@ -15,6 +15,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#include "RCE_types.h"
+
 /*
  * 注意事项：
  * 1. 目前不支持修改分辨率，因为VIDIOC_S_PARM命令会失败。
@@ -34,30 +36,52 @@ extern "C" {
  *    100ms，从而导致运行效率低下。该参数设置为1，在无数据时，会按照设置的参数运行，提高运行效率。
  */
 
-/* CAM：图像宽高 */
-#define RCE_CAMERA_RESOLUTION_WIDTH              (                        1280u)  
-#define RCE_CAMERA_RESOLUTION_HEIGHT             (                         720u)
+/* ini配置文件 */
+#define RCE_CONFIG_FILE              ("./RCE_config.ini")
 
-/* CAM：图像帧率 */
-#define RCE_CAMERA_FPS                           (                          30u)
+/* 全局配置信息 */
+typedef struct tagRCE_CONFIG
+{
+    /* 图像信息 */
+    USHORT usWidth ;        /* 图像宽度 */           /* 缺省值1280              */
+    USHORT usHeight ;       /* 图像高度 */           /* 缺省值720               */
+    UINT   uiFps ;          /* 图像帧率 */           /* 缺省值30                */
 
-/* CAM：输出格式，勿修改 */
-#define RCE_CAMERA_PIX_FMT                       (            V4L2_PIX_FMT_NV12)
+    /* 编码器设置 */
+    UINT   uiHWBitrate ;    /* 设置硬件编码时的输出码率 */
+    
+    /* 输出文件设置 */
+    UINT   uiWrToFile ;     /* 是否写入到文件。0：不写入文件；1：写入文件 */ /* 缺省值0，不写入文件 */
+    CHAR   acFile[128] ;    /* 文件名 */
 
-/* 编码结果是否保存为文件 */
-#define RCE_H264_TO_FILE                         (                           1u)
+    /* 网络设置 */
+    CHAR   acLocalIp[64] ;  /* 本地IP */
+    USHORT usLocalPort ;    /* 本地端口 */
 
-/* 保存文件名，勿修改 */
-#if 1 == RCE_H264_TO_FILE
-#define RCE_H264_FILE_NAME                       (                  "H-ENC.264")
-#endif
+    CHAR   acRemoteIp[64] ; /* 远端IP */
+    USHORT usRemotePort ;   /* 远端端口 */
+} RCE_CONFIG_S ;
 
-/* 通信配置 */
-#define RCE_LOCAL_IP                             (              "192.168.3.106")    /* 本地IP地址 */
-#define RCE_LOCAL_PORT                           (                       12001u)    /* 本地端口号 */
+/*********************************************************
+ * 缺省配置
+ *********************************************************/
+/* 图像宽度、高度、帧率缺省值 */
+#define RCE_CAMERA_RESOLUTION_WIDTH_DEFAULT      (                        1280u)  
+#define RCE_CAMERA_RESOLUTION_HEIGHT_DEFAULT     (                         720u)
+#define RCE_CAMERA_FPS_DEFAULT                   (                          60u)
 
-#define RCE_REMOTE_IP                            (              "192.168.3.100")    /* 远端IP地址 */
-#define RCE_REMOTE_PORT                          (                       12000u)    /* 远端端口号 */
+/* 保存文件名缺省值 */
+#define RCE_H264_FILE_NAME_DEFAULT               (                    "enc.264")
+
+/* 硬件编码输出码率缺省值 */
+#define RCE_H264_HW_BITRATE                      (                     2000000u)
+
+/* 通信配置缺省值 */
+#define RCE_LOCAL_IP_DEFAULT                     (              "192.168.3.101")    /* 本地IP地址 */
+#define RCE_LOCAL_PORT_DEFAULT                   (                       12001u)    /* 本地端口号 */
+
+#define RCE_REMOTE_IP_DEFAULT                    (              "192.168.3.100")    /* 远端IP地址 */
+#define RCE_REMOTE_PORT_DEFAULT                  (                       12000u)    /* 远端端口号 */
 
 /* 统计间隔时间 */
 #define RCE_STATISTIC_PERIOD_USEC                (                      250000u)

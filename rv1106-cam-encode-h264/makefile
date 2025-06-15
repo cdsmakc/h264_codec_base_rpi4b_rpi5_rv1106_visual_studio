@@ -17,6 +17,7 @@ RCE_INCLUDE += -I$(RCE_SDK_PATH)/media/out/include/rkaiq/iq_parser
 RCE_INCLUDE += -I$(RCE_SDK_PATH)/media/out/include/rkaiq/iq_parser_v2
 RCE_INCLUDE += -I$(RCE_SDK_PATH)/media/out/include/rkaiq/smartIr
 RCE_INCLUDE += -I$(RCE_SDK_PATH)/media/samples/example/common/isp3.x
+RCE_INCLUDE += -I./iniparser-4.1/src/
 
 PKG_CONF_OPTS := -DRKPLATFORM=ON
 PKG_CONF_OPTS += -DARCH64=OFF
@@ -37,7 +38,7 @@ RCE_CFLAGS += -DISP_HW_V30 -DRV1106 -DROCKIT_IVS -DROCKCOMBO -DUAPI2 -DRKAIQ_GRP
 
 
 all:
-	@$(RCE_CC) $(RCE_CFLAGS) RCE.c RCE_CAM.c RCE_ENC.c RCE_DTR.c -o rce $(RCE_LD_FLAGS) -lrockchip_mpp -lrkaiq -lrtsp
+	@$(RCE_CC) $(RCE_CFLAGS) RCE.c RCE_CAM.c RCE_ENC.c RCE_DTR.c ./iniparser-4.1/src/dictionary.c ./iniparser-4.1/src/iniparser.c -o rce $(RCE_LD_FLAGS) -lrockchip_mpp -lrkaiq -lrtsp
 	@cp ./rce /mnt/hgfs/share/rce
 
 clean:

@@ -45,8 +45,8 @@ CODE_SECTION("==========================") ;
 
 
 /* 内部 */
-#include "RCE_config.h"
 #include "RCE_types.h"
+#include "RCE_config.h"
 #include "RCE_CAM.h"
 #include "RCE_ENC.h"
 #include "RCE_DTR.h"
@@ -68,8 +68,11 @@ STATIC MB_POOL_CONFIG_S       g_stMBPoolCfg ;
 STATIC MB_POOL                g_uiMBPool ;
 
 /* 来自CAM模块 */
-extern UCHAR                  g_aucFrameBuffer[RCE_CAM_FRAME_BUFFER_SIZE] ;
+extern UCHAR                 *g_pucFrameBuffer ;
 extern UINT                   g_uiFrameBufferValid ;
+
+/* 配置信息 */
+extern RCE_CONFIG_S           g_stRCEConfig ;
 
 UINT                        ui64Time1 ;
 UINT                        ui64Time2 ;
@@ -187,15 +190,15 @@ INT __RCE_ENC_CreateChannel(VOID)
     INT iRetVal ;
 
     g_stChnAttr.stVencAttr.enType                      = RK_VIDEO_ID_AVC ;
-	g_stChnAttr.stVencAttr.enPixelFormat               = RCE_ENC_CHN_ATTR_PIX_FMT ;
-	g_stChnAttr.stVencAttr.u32MaxPicWidth              = RCE_ENC_CHN_ATTR_RESOLUTION_WIDTH ;
-	g_stChnAttr.stVencAttr.u32MaxPicHeight             = RCE_ENC_CHN_ATTR_RESOLUTION_HEIGHT ;
-	g_stChnAttr.stVencAttr.u32PicWidth                 = RCE_ENC_CHN_ATTR_RESOLUTION_WIDTH ;
-	g_stChnAttr.stVencAttr.u32PicHeight                = RCE_ENC_CHN_ATTR_RESOLUTION_HEIGHT ;
-	g_stChnAttr.stVencAttr.u32VirWidth                 = RK_ALIGN_2(RCE_ENC_CHN_ATTR_RESOLUTION_WIDTH) ;
-	g_stChnAttr.stVencAttr.u32VirHeight                = RK_ALIGN_2(RCE_ENC_CHN_ATTR_RESOLUTION_HEIGHT) ;
+	g_stChnAttr.stVencAttr.enPixelFormat               = RK_FMT_YUV420SP ;
+	g_stChnAttr.stVencAttr.u32MaxPicWidth              = g_stRCEConfig.usWidth ;
+	g_stChnAttr.stVencAttr.u32MaxPicHeight             = g_stRCEConfig.usHeight ;
+	g_stChnAttr.stVencAttr.u32PicWidth                 = g_stRCEConfig.usWidth ;
+	g_stChnAttr.stVencAttr.u32PicHeight                = g_stRCEConfig.usHeight ;
+	g_stChnAttr.stVencAttr.u32VirWidth                 = RK_ALIGN_2(g_stRCEConfig.usWidth) ;
+	g_stChnAttr.stVencAttr.u32VirHeight                = RK_ALIGN_2(g_stRCEConfig.usHeight) ;
     g_stChnAttr.stVencAttr.u32StreamBufCnt             = RCE_ENC_CHN_ATTR_STREAM_BUF_COUNT ;
-    g_stChnAttr.stVencAttr.u32BufSize                  = RCE_ENC_CHN_ATTR_FRAME_SIZE ;
+    g_stChnAttr.stVencAttr.u32BufSize                  = g_stRCEConfig.usWidth * g_stRCEConfig.usHeight * 3 / 2 ;
 
 #if VENC_RC_MODE_H264CBR == RCE_ENC_RC_MODE
     /* 恒定码率 */
@@ -203,9 +206,9 @@ INT __RCE_ENC_CreateChannel(VOID)
     g_stChnAttr.stRcAttr.stH264Cbr.u32Gop              = RCE_ENC_RC_GOP ;
     g_stChnAttr.stRcAttr.stH264Cbr.u32BitRate          = RCE_ENC_RC_BITRATE ;
     g_stChnAttr.stRcAttr.stH264Cbr.fr32DstFrameRateDen = 1 ;
-    g_stChnAttr.stRcAttr.stH264Cbr.fr32DstFrameRateNum = RCE_ENC_RC_FPS ;
+    g_stChnAttr.stRcAttr.stH264Cbr.fr32DstFrameRateNum = g_stRCEConfig.uiFps ;
     g_stChnAttr.stRcAttr.stH264Cbr.u32SrcFrameRateDen  = 1 ;
-    g_stChnAttr.stRcAttr.stH264Cbr.u32SrcFrameRateNum  = RCE_ENC_RC_FPS ;
+    g_stChnAttr.stRcAttr.stH264Cbr.u32SrcFrameRateNum  = g_stRCEConfig.uiFps ;
 #else 
     /* 可变码率 */
     g_stChnAttr.stRcAttr.enRcMode                      = RCE_ENC_RC_MODE ;
@@ -347,7 +350,7 @@ VOID __RCE_ENC_StopRecvFrame(VOID)
 *******************************************************************************/
 INT __RCE_ENC_CreateMBPool(VOID)
 {
-    g_stMBPoolCfg.u64MBSize                     = RCE_ENC_CHN_ATTR_FRAME_SIZE ;
+    g_stMBPoolCfg.u64MBSize                     = g_stRCEConfig.usWidth * g_stRCEConfig.usHeight * 3 / 2 ;
     g_stMBPoolCfg.u32MBCnt                      = RCE_ENC_MB_COUNT ;
     g_stMBPoolCfg.enAllocType                   = MB_ALLOC_TYPE_DMA ;
     g_stMBPoolCfg.bPreAlloc                     = RK_TRUE ;
@@ -406,7 +409,7 @@ INT __RCE_ENC_SendFrameToEnc(VOID)
     INT                 iRetVal ;
 
     /* 申请Memory-Block */
-    uiSize = RCE_ENC_CHN_ATTR_FRAME_SIZE ;
+    uiSize = g_stRCEConfig.usWidth * g_stRCEConfig.usHeight * 3 / 2 ;
     pvMBlk = RK_MPI_MB_GetMB(g_uiMBPool, uiSize, RK_TRUE) ;
 
     if(RK_NULL == pvMBlk)
@@ -419,18 +422,18 @@ INT __RCE_ENC_SendFrameToEnc(VOID)
     pucVirAddr = (UCHAR *)(RK_MPI_MB_Handle2VirAddr(pvMBlk)) ;
 
     /* 将图像数据拷贝到缓存 */
-    memcpy(pucVirAddr, g_aucFrameBuffer, sizeof(g_aucFrameBuffer)) ;
+    memcpy(pucVirAddr, g_pucFrameBuffer, uiSize) ;
 
     /* 刷新cache */
     RK_MPI_SYS_MmzFlushCache(pvMBlk, RK_FALSE) ;
 
     /* 填写帧结构 */
     stFrame.stVFrame.pMbBlk          = pvMBlk ;
-    stFrame.stVFrame.u32Width        = RCE_ENC_CHN_ATTR_RESOLUTION_WIDTH ;
-    stFrame.stVFrame.u32Height       = RCE_ENC_CHN_ATTR_RESOLUTION_HEIGHT ;
-    stFrame.stVFrame.u32VirWidth     = RCE_ENC_CHN_ATTR_RESOLUTION_WIDTH ;
-    stFrame.stVFrame.u32VirHeight    = RCE_ENC_CHN_ATTR_RESOLUTION_HEIGHT ;
-    stFrame.stVFrame.enPixelFormat   = RCE_ENC_CHN_ATTR_PIX_FMT ;
+    stFrame.stVFrame.u32Width        = g_stRCEConfig.usWidth ;
+    stFrame.stVFrame.u32Height       = g_stRCEConfig.usHeight ;
+    stFrame.stVFrame.u32VirWidth     = g_stRCEConfig.usWidth ;
+    stFrame.stVFrame.u32VirHeight    = g_stRCEConfig.usHeight ;
+    stFrame.stVFrame.enPixelFormat   = RK_FMT_YUV420SP ;
     stFrame.stVFrame.u32FrameFlag   |= 0 ;
     stFrame.stVFrame.enCompressMode  = COMPRESS_MODE_NONE ;
 
@@ -685,7 +688,7 @@ VOID *RCE_ENC_Thread(VOID *pvArgs)
             g_uiFrameBufferValid = 0 ;
 
             /* 统计：更新已编码的数据量和帧数 */
-            g_stENCWorkarea.stStatistics.ui64DataCountEncoded += RCE_ENC_CHN_ATTR_FRAME_SIZE ;
+            g_stENCWorkarea.stStatistics.ui64DataCountEncoded += g_stRCEConfig.usWidth * g_stRCEConfig.usHeight * 3 / 2 ;
             g_stENCWorkarea.stStatistics.uiFrameCountEncoded++ ;
         }
 

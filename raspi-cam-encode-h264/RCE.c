@@ -129,8 +129,8 @@ INT __RCE_ParseConfig(VOID)
     g_stRCEConfig.usLocalPort  = iniparser_getint(pstDictionary, "COMMUNICATION_CFG:comm_cfg_local_port", RCE_LOCAL_PORT_DEFAULT) ;
     g_stRCEConfig.usRemotePort = iniparser_getint(pstDictionary, "COMMUNICATION_CFG:comm_cfg_remote_port", RCE_REMOTE_PORT_DEFAULT) ;
 
-    strcpy(g_stRCEConfig.acLocalIp, iniparser_getstring(pstDictionary, "OUTPUT_FILE_CFG:comm_cfg_local_ip", RCE_LOCAL_IP_DEFAULT)) ;
-    strcpy(g_stRCEConfig.acRemoteIp, iniparser_getstring(pstDictionary, "OUTPUT_FILE_CFG:comm_cfg_remote_ip", RCE_REMOTE_IP_DEFAULT)) ;
+    strcpy(g_stRCEConfig.acLocalIp, iniparser_getstring(pstDictionary, "COMMUNICATION_CFG:comm_cfg_local_ip", RCE_LOCAL_IP_DEFAULT)) ;
+    strcpy(g_stRCEConfig.acRemoteIp, iniparser_getstring(pstDictionary, "COMMUNICATION_CFG:comm_cfg_remote_ip", RCE_REMOTE_IP_DEFAULT)) ;
 
     iniparser_freedict(pstDictionary);
 

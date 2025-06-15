@@ -1,0 +1,95 @@
+(ExpressProject ""
+  (ProjectVersion "19981106")
+  (SoftwareVersion "17.4-2019 S032 (4052516)  [8/29/2022]-[06/11/25]")
+  (ProjectType "PCB")
+  (Folder "Design Resources"
+    (Folder "Library")
+    ("Allegro Netlist Directory" "allegro")
+    (File ".\imx415_to_22pin.dsn"
+      (Type "Schematic Design"))
+    (BuildFileAddedOrDeleted "x")
+    (CompileFileAddedOrDeleted "x")
+    (DOCKED "TRUE")
+    (DOCKING_POSITION "59420")
+    (NoModify)
+    (Netlist_TAB "0")
+    ("Create Allegro Netlist" "TRUE")
+    ("View Allegro Netlist Files" "FALSE")
+    ("Allegro Netlist Create DCF File" "FALSE")
+    ("Update Allegro Board" "FALSE")
+    ("Allegro Netlist Output Board File" ".\allegro\imx415_to_22pin.brd")
+    ("Allegro Netlist Remove Etch" "FALSE")
+    ("Allegro Netlist Place Changed Component" "ALWAYS_REPLACE")
+    ("Allegro Netlist Open Board in Allegro" "ALLEGRO")
+    ("Allegro Setup Backup Versions" "3")
+    ("Allegro Setup Ignore Constraints" "FALSE")
+    ("Allegro Setup Part Type Length" "255")
+    ("Allegro Netlist Combine Property String" "PCB Footprint")
+    ("Allegro Netlist Ignore Fixed Property" "FALSE")
+    ("Allegro Netlist User Defined Property" "FALSE"))
+  (Folder "Layout")
+  (Folder "Outputs"
+    (File ".\allegro\pstxnet.dat"
+      (Type "Report")
+      (DisplayName "pstxnet.dat"))
+    (File ".\allegro\pstxprt.dat"
+      (Type "Report")
+      (DisplayName "pstxprt.dat"))
+    (File ".\allegro\pstchip.dat"
+      (Type "Report")
+      (DisplayName "pstchip.dat")))
+  (Folder "Referenced Projects")
+  (Folder "PSpice Resources"
+    (Folder "Simulation Profiles")
+    (Folder "Model Libraries"
+      (Sort User))
+    (Folder "Stimulus Files"
+      (Sort User))
+    (Folder "Include Files"
+      (Sort User)))
+  (Folder "Logs")
+  (PartMRUSelector
+    (RC0805FR-071RL
+      (FullPartName "RC0805FR-071RL.Normal")
+      (LibraryName
+         "Y:\CADENCECENLIB\SYMBOL\RES_SMD_GENERAL_YAGEO_RC0805_SERIES.OLB")
+      (DeviceIndex "0"))
+    (AFC07-S20ECC-00
+      (FullPartName "AFC07-S20ECC-00.Normal")
+      (LibraryName "Y:\CADENCECENLIB\SYMBOL\CON_MISC.OLB")
+      (DeviceIndex "0"))
+    (GND
+      (LibraryName "D:\CADENCE\SPB_17.4\TOOLS\CAPTURE\LIBRARY\CAPSYM.OLB")
+      (DeviceIndex "0"))
+    (AFC07-S22FCA-00
+      (FullPartName "AFC07-S22FCA-00.Normal")
+      (LibraryName "Y:\CADENCECENLIB\SYMBOL\CON_MISC.OLB")
+      (DeviceIndex "0")))
+  (GlobalState
+    (FileView
+      (Path "Design Resources")
+      (Path "Design Resources"
+         "e:\h264_codec_base_rpi4b_rv1106_visual_studio\imx415_to_20pin_brd\imx415_to_22pin.dsn")
+      (Path "Design Resources"
+         "e:\h264_codec_base_rpi4b_rv1106_visual_studio\imx415_to_20pin_brd\imx415_to_22pin.dsn"
+         "SCHEMATIC1")
+      (Path "Outputs"))
+    (HierarchyView)
+    (Doc
+      (Type "COrCapturePMDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -1 -1 0 200 0 900"))
+      (Tab 0))
+    (Doc
+      (Type "COrSchematicDoc")
+      (Frame
+        (Placement "44 0 1 -1 -1 -1 -1 5 2314 28 922")
+        (Scroll "0 162")
+        (Zoom "146")
+        (Occurrence "/"))
+      (Path
+         "E:\H264_CODEC_BASE_RPI4B_RV1106_VISUAL_STUDIO\IMX415_TO_20PIN_BRD\IMX415_TO_22PIN.DSN")
+      (Schematic "SCHEMATIC1")
+      (Page "05_Func1")))
+  (MPSSessionName "Administrator")
+  (ISPCBBASICLICENSE "false"))

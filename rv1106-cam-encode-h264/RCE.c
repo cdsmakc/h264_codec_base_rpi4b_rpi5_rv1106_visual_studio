@@ -30,6 +30,7 @@ CODE_SECTION("==========================") ;
 #include <sys/time.h>
 
 /* 第三方 */
+#include "./iniparser-4.1/src/iniparser.h"
 
 /* 内部 */
 #include "RCE_config.h"
@@ -48,11 +49,19 @@ extern RCE_DTR_WORKAREA_S  g_stDTRWorkarea ;
 
 /* 标记 */
 UINT                       uiLogStatistics = 1 ;
+UINT                       uiExit          = 0 ;
 
 /* 线程ID */
 pthread_t                  g_tidCAM ;
 pthread_t                  g_tidDTR ;
 pthread_t                  g_tidENC ;
+
+/* 配置信息 */
+RCE_CONFIG_S               g_stRCEConfig ;
+
+/* CAM至ENC的帧缓存 */
+extern UCHAR              *g_pucFrameBuffer ;
+extern UINT                g_uiFrameBufferValid ;
 
 CODE_SECTION("==========================") ;
 CODE_SECTION("==  日志颜色定义        ==") ;
@@ -82,6 +91,88 @@ CODE_SECTION("==========================") ;
 CODE_SECTION("==========================") ;
 CODE_SECTION("==  内部函数            ==") ;
 CODE_SECTION("==========================") ;
+
+/*******************************************************************************
+- Function    : __RCE_ParseConfig
+- Description : 本函数解析配置文件，从而获取配置。
+- Input       : VOID
+- Output      : NULL
+- Return      : INT
+                    0  : success.
+                    -1 : fail.
+- Others      :
+*******************************************************************************/
+INT __RCE_ParseConfig(VOID)
+{
+    dictionary *pstDictionary ;
+
+    /* 加载ini文件 */
+    pstDictionary = iniparser_load(RCE_CONFIG_FILE) ;
+
+    if(NULL == pstDictionary)
+    {
+        printf("File %s, func %s, line %d : Cannot load ini config file %s. \n", __FILE__, __func__, __LINE__, RCE_CONFIG_FILE) ;
+
+        return -1 ;
+    }
+
+    /* 获取配置项 */
+    g_stRCEConfig.usWidth      = iniparser_getint(pstDictionary, "VIDEO_CFG:video_cfg_frame_width", RCE_CAMERA_RESOLUTION_WIDTH_DEFAULT) ;
+    g_stRCEConfig.usHeight     = iniparser_getint(pstDictionary, "VIDEO_CFG:video_cfg_frame_height", RCE_CAMERA_RESOLUTION_HEIGHT_DEFAULT) ;
+    g_stRCEConfig.uiFps        = iniparser_getint(pstDictionary, "VIDEO_CFG:video_cfg_frame_fps", RCE_CAMERA_FPS_DEFAULT) ;
+
+    g_stRCEConfig.uiHWBitrate  = iniparser_getint(pstDictionary, "ENCODER_CFG:encoder_cfg_hw_bitrate", RCE_H264_HW_BITRATE) ;
+
+    g_stRCEConfig.uiWrToFile   = iniparser_getint(pstDictionary, "OUTPUT_FILE_CFG:output_file_cfg_enable", 0) ;
+    strcpy(g_stRCEConfig.acFile, iniparser_getstring(pstDictionary, "OUTPUT_FILE_CFG:output_file_name", RCE_H264_FILE_NAME_DEFAULT)) ;
+
+    g_stRCEConfig.usLocalPort  = iniparser_getint(pstDictionary, "COMMUNICATION_CFG:comm_cfg_local_port", RCE_LOCAL_PORT_DEFAULT) ;
+    g_stRCEConfig.usRemotePort = iniparser_getint(pstDictionary, "COMMUNICATION_CFG:comm_cfg_remote_port", RCE_REMOTE_PORT_DEFAULT) ;
+
+    strcpy(g_stRCEConfig.acLocalIp, iniparser_getstring(pstDictionary, "COMMUNICATION_CFG:comm_cfg_local_ip", RCE_LOCAL_IP_DEFAULT)) ;
+    strcpy(g_stRCEConfig.acRemoteIp, iniparser_getstring(pstDictionary, "COMMUNICATION_CFG:comm_cfg_remote_ip", RCE_REMOTE_IP_DEFAULT)) ;
+
+    iniparser_freedict(pstDictionary);
+
+    return 0 ;
+}
+
+/*******************************************************************************
+- Function    : __RCE_DumpConfig
+- Description : 本函数打印全局配置。
+- Input       : VOID
+- Output      : NULL
+- Return      : VOID
+- Others      :
+*******************************************************************************/
+VOID __RCE_DumpConfig(VOID)
+{
+    printf(RCE_LOG_FOREGROUND_COLOR_GREEN) ;
+    printf("** CFG : ************************\n"
+            "--      Video width                     : %u \n"
+            "--      Video height                    : %u \n"
+            "--      Video fps                       : %u \n"
+            "--      Hardware encoder bitrate        : %u \n"
+            "--      Write to file                   : %s \n"
+            "--          File name :                 : %s \n" 
+            "--      Local  ip                       : %s \n"
+            "--      Local  port                     : %u \n" 
+            "--      Remote ip                       : %s \n"
+            "--      Remote port                     : %u \n",
+            g_stRCEConfig.usWidth, 
+            g_stRCEConfig.usHeight, 
+            g_stRCEConfig.uiFps,
+            g_stRCEConfig.uiHWBitrate,
+            (0 == g_stRCEConfig.uiWrToFile) ? "No" : "Yes",
+            g_stRCEConfig.acFile,
+            g_stRCEConfig.acLocalIp,
+            g_stRCEConfig.usLocalPort,
+            g_stRCEConfig.acRemoteIp,
+            g_stRCEConfig.usRemotePort) ;
+    printf(RCE_LOG_BACKGROUND_COLOR_STOP) ;
+
+    return ;
+}
 
 /*******************************************************************************
 - Function    : __RCE_StopThreadCAM
@@ -265,24 +356,25 @@ VOID __RCE_DPS_DumpCAMStatistics(VOID)
                 g_stCAMWorkarea.stStatistics.ui64DataCountFromCamera) ;
     }
 
-    printf( "%s** CAM : ************************\n"
-            "%s--      total frame count from camera   : %u            \n"
-            "%s--      send to ENC thread frame count  : %u            \n"
-            "%s--      encode rate                     : %2.2f%%       \n"
-            "%s--      total fps                       : %3.2f fps     \n" 
-            "%s--      current fps                     : %3.2f fps     \n"
-            "%s--      total bps                       : %s            \n" 
-            "%s--      current bps                     : %s            \n"
-            "%s--      total data received             : %s          %s\n",
-            RCE_LOG_FOREGROUND_COLOR_RED,
-            RCE_LOG_FOREGROUND_COLOR_RED, g_stCAMWorkarea.stStatistics.uiFrameCountFromCamera,
-            RCE_LOG_FOREGROUND_COLOR_RED, g_stCAMWorkarea.stStatistics.uiFrameCountToEncoder,
-            RCE_LOG_FOREGROUND_COLOR_RED, g_stCAMWorkarea.stStatistics.fSoftEncodeRate,
-            RCE_LOG_FOREGROUND_COLOR_RED, g_stCAMWorkarea.stStatistics.fTotalFPS,
-            RCE_LOG_FOREGROUND_COLOR_RED, g_stCAMWorkarea.stStatistics.fCurrentFPS,
-            RCE_LOG_FOREGROUND_COLOR_RED, acPrintBufTotalBPS,
-            RCE_LOG_FOREGROUND_COLOR_RED, acPrintBufCurrentBPS,
-            RCE_LOG_FOREGROUND_COLOR_RED, acPrintBufDataRecved, RCE_LOG_BACKGROUND_COLOR_STOP) ;
+    printf(RCE_LOG_FOREGROUND_COLOR_RED) ;
+    printf( "** CAM : ************************\n"
+            "--      total frame count from camera   : %u            \n"
+            "--      send to ENC thread frame count  : %u            \n"
+            "--      encode rate                     : %2.2f%%       \n"
+            "--      total fps                       : %3.2f fps     \n" 
+            "--      current fps                     : %3.2f fps     \n"
+            "--      total bps                       : %s            \n" 
+            "--      current bps                     : %s            \n"
+            "--      total data received             : %s            \n",
+            g_stCAMWorkarea.stStatistics.uiFrameCountFromCamera,
+            g_stCAMWorkarea.stStatistics.uiFrameCountToEncoder,
+            g_stCAMWorkarea.stStatistics.fSoftEncodeRate,
+            g_stCAMWorkarea.stStatistics.fTotalFPS,
+            g_stCAMWorkarea.stStatistics.fCurrentFPS,
+            acPrintBufTotalBPS,
+            acPrintBufCurrentBPS,
+            acPrintBufDataRecved) ;
+    printf(RCE_LOG_BACKGROUND_COLOR_STOP) ;
 
     return ;
 }
@@ -394,22 +486,25 @@ VOID __RCE_DPS_DumpENCStatistics(VOID)
                 g_stENCWorkarea.stStatistics.uiCurrentEncodeBPS) ;
     }
 
-    printf( "%s** ENC : ************************\n"
-            "%s--      total frame count encoded       : %u            \n"
-            "%s--      total data count encoded        : %s            \n"
-            "%s--      total data generated by encoder : %s            \n"
-            "%s--      total encode fps                : %3.2f fps     \n" 
-            "%s--      current encode fps              : %3.2f fps     \n"
-            "%s--      total generate bps              : %s            \n" 
-            "%s--      current generate bps            : %s          %s\n",
-            RCE_LOG_FOREGROUND_COLOR_BLUE, 
-            RCE_LOG_FOREGROUND_COLOR_BLUE, g_stENCWorkarea.stStatistics.uiFrameCountEncoded,
-            RCE_LOG_FOREGROUND_COLOR_BLUE, acPrintBufDataCountEncoded,
-            RCE_LOG_FOREGROUND_COLOR_BLUE, acPrintBufDataCountGenerated,
-            RCE_LOG_FOREGROUND_COLOR_BLUE, g_stENCWorkarea.stStatistics.fTotalEncodeFPS,
-            RCE_LOG_FOREGROUND_COLOR_BLUE, g_stENCWorkarea.stStatistics.fCurrentEncodeFPS,
-            RCE_LOG_FOREGROUND_COLOR_BLUE, acPrintBufTotalEncodeBPS,
-            RCE_LOG_FOREGROUND_COLOR_BLUE, acPrintBufCurrentEncodeBPS, RCE_LOG_BACKGROUND_COLOR_STOP) ;
+    printf(RCE_LOG_FOREGROUND_COLOR_BLUE) ;
+    printf( "** ENC : ************************\n"
+            "--      total frame count encoded       : %u            \n"
+            "--      total data count encoded        : %s            \n"
+            "--      total data generated by encoder : %s            \n"
+            "--      total encode fps                : %3.2f fps     \n" 
+            "--      current encode fps              : %3.2f fps     \n"
+            "--      total generate bps              : %s            \n" 
+            "--      current generate bps            : %s            \n",
+            g_stENCWorkarea.stStatistics.uiFrameCountEncoded,
+            acPrintBufDataCountEncoded,
+            acPrintBufDataCountGenerated,
+            g_stENCWorkarea.stStatistics.fTotalEncodeFPS,
+            g_stENCWorkarea.stStatistics.fCurrentEncodeFPS,
+            acPrintBufTotalEncodeBPS,
+            acPrintBufCurrentEncodeBPS) ;
+    printf(RCE_LOG_BACKGROUND_COLOR_STOP) ;
+
+    return ;
 }
 
 /*******************************************************************************
@@ -519,16 +614,17 @@ VOID __RCE_DPS_DumpDTRStatistics(VOID)
                 g_stDTRWorkarea.stStatistics.uiCurrentBPSToSocket) ;
     }
 
-    printf( "%s** DTR : ************************\n"
-            "%s--      total data received from fifo   : %s            \n"
-            "%s--      total data send to socket       : %s            \n"
-            "%s--      current bps from fifo           : %s            \n" 
-            "%s--      current bps to socket           : %s          %s\n",
-            RCE_LOG_FOREGROUND_COLOR_CYAN, 
-            RCE_LOG_FOREGROUND_COLOR_CYAN, acPrintBufDataCountFromFIFO,
-            RCE_LOG_FOREGROUND_COLOR_CYAN, acPrintBufDataCountToSocket,
-            RCE_LOG_FOREGROUND_COLOR_CYAN, acPrintBufBPSFromFIFO,
-            RCE_LOG_FOREGROUND_COLOR_CYAN, acPrintBufBPSToSocekt, RCE_LOG_BACKGROUND_COLOR_STOP) ;
+    printf(RCE_LOG_FOREGROUND_COLOR_CYAN) ;
+    printf( "** DTR : ************************\n"
+            "--      total data received from fifo   : %s            \n"
+            "--      total data send to socket       : %s            \n"
+            "--      current bps from fifo           : %s            \n" 
+            "--      current bps to socket           : %s            \n",
+            acPrintBufDataCountFromFIFO,
+            acPrintBufDataCountToSocket,
+            acPrintBufBPSFromFIFO,
+            acPrintBufBPSToSocekt) ;
+    printf(RCE_LOG_BACKGROUND_COLOR_STOP) ;
 
     return ;
 }
@@ -559,6 +655,9 @@ VOID __RCE_DumpStatistics(VOID)
     /* 打印CAM线程信息 */
     if(1)
     {
+        /* 打印配置信息 */
+        __RCE_DumpConfig() ;
+
         /* 打印CAM线程统计信息 */
         __RCE_DPS_DumpCAMStatistics() ;
 
@@ -590,15 +689,7 @@ VOID __RCE_SignalHandler(INT iSignum)
 {
     if(SIGINT == iSignum)
     {
-        /* 停止打印，并将光标放到尾部 */
-        uiLogStatistics = 0 ;
-        printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n") ;
-
-        __RCE_StopThreadCAM() ;
-        __RCE_StopThreadENC() ;
-        __RCE_StopThreadDTR() ;
-
-        exit(0) ;
+        uiExit = 1 ;
     }
 
     if(SIGALRM == iSignum)
@@ -627,13 +718,28 @@ INT main(VOID)
     signal(SIGINT, __RCE_SignalHandler) ;
     signal(SIGALRM, __RCE_SignalHandler) ;
 
+    /* 获取配置参数 */
+    if(0 != __RCE_ParseConfig())
+    {
+        return -1 ;
+    }
+
+    /* 申请CAM到ENC的缓存块 */
+    g_pucFrameBuffer = malloc(g_stRCEConfig.usWidth * g_stRCEConfig.usHeight * 3 /2) ;
+
+    if(NULL == g_pucFrameBuffer)
+    {
+        printf("File %s, func %s, line %d : Malloc frame buffer from CAM to ENC failed. \n", __FILE__, __func__, __LINE__) ;
+        return -2 ;
+    }
+
     /* 创建CAM线程 */
     pthread_create(&g_tidCAM, NULL, RCE_CAM_Thread, NULL) ;
     pthread_create(&g_tidENC, NULL, RCE_ENC_Thread, NULL) ;
     pthread_create(&g_tidDTR, NULL, RCE_DTR_Thread, NULL) ;
 
     /* 等待一段时间，让子线程打印完毕 */
-    usleep(500000) ;
+    usleep(2000000) ;
 
     /* 创建定时器 */
     stTimerSets.it_value.tv_sec     = 0 ;
@@ -646,7 +752,6 @@ INT main(VOID)
 
     while(1)
     {
-
         if(1 == uiLogStatistics)
         {
             __RCE_DumpStatistics() ;
@@ -654,8 +759,27 @@ INT main(VOID)
             uiLogStatistics = 0 ;
         }
 
+        if(1 == uiExit)
+        {
+            /* 停止打印，并将光标放到尾部 */
+            //uiLogStatistics = 0 ;
+
+            /* 等待正在进行中的打印完成 */
+            usleep(50000) ;
+
+            printf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n") ;
+
+            __RCE_StopThreadCAM() ;
+            __RCE_StopThreadENC() ;
+            __RCE_StopThreadDTR() ;
+
+            break ;
+        }
+
         usleep(10000) ;
     }
+
+    free(g_pucFrameBuffer) ;
 
     return 0 ;
 }

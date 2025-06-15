@@ -1,0 +1,26 @@
+|------------------------------------------------------------------------------|
+|                                 ECO   REPORT                                 |
+|                                                                    Page   1  |
+|------------------------------------------------------------------------------|
+|  E:.../imx415_to_20Pin_brd/imx415_to_22pin.brd                               |
+|                                                    Wed Jun 11 19:23:22 2025  |
+|------------------------------------------------------------------------------|
+| NET PROPERTIES added to design                                               |
+|- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - |
+|     net  name   |   property   |                    value                    |
+|- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - |
+ CLK_N             DIFFERENTIAL_P CLK
+ CLK_P             DIFFERENTIAL_P CLK
+ D0_N              DIFFERENTIAL_P D0
+ D0_P              DIFFERENTIAL_P D0
+ D1_N              DIFFERENTIAL_P D1
+ D1_P              DIFFERENTIAL_P D1
+ D2_N              DIFFERENTIAL_P D2
+ D2_P              DIFFERENTIAL_P D2
+ D3_N              DIFFERENTIAL_P D3
+ D3_P              DIFFERENTIAL_P D3
+|------------------------------------------------------------------------------|
+|       Net property added    :      10                                        |
+|                                                                              |
+|   Total ECO changes reported:      10                                        |
+|------------------------------------------------------------------------------|

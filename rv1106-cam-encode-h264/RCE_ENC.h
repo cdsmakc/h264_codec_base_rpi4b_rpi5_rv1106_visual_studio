@@ -28,16 +28,10 @@ CODE_SECTION("==========================") ;
 #define RCE_ENC_CHANNEL_ID                  (                                       1)
 
 /* H264编码属性 */
-#define RCE_ENC_CHN_ATTR_PIX_FMT            (                         RK_FMT_YUV420SP)
-#define RCE_ENC_CHN_ATTR_RESOLUTION_WIDTH   (             RCE_CAMERA_RESOLUTION_WIDTH)
-#define RCE_ENC_CHN_ATTR_RESOLUTION_HEIGHT  (            RCE_CAMERA_RESOLUTION_HEIGHT)
-#define RCE_ENC_CHN_ATTR_RESOLUTION_PIXELS  (RCE_CAMERA_RESOLUTION_WIDTH * RCE_CAMERA_RESOLUTION_HEIGHT)
-#define RCE_ENC_CHN_ATTR_FRAME_SIZE         (RCE_ENC_CHN_ATTR_RESOLUTION_PIXELS * 3 / 2)
 #define RCE_ENC_CHN_ATTR_STREAM_BUF_COUNT   (                                      3u)
 #define RCE_ENC_RC_MODE                     (                    VENC_RC_MODE_H264CBR) /* 固定码率或可变码率 */
 #define RCE_ENC_RC_GOP                      (                                     50u) /* Group of picture */
 #define RCE_ENC_RC_BITRATE                  (                      1u * 1024u * 1024u) /* 码率 */
-#define RCE_ENC_RC_FPS                      (                          RCE_CAMERA_FPS)
 
 /* 内存池属性 */
 #define RCE_ENC_MB_COUNT                    (                                      10)

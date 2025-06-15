@@ -45,6 +45,7 @@ CODE_SECTION("==========================") ;
 
 /* 内部 */
 #include "RCE_types.h"
+#include "RCE_config.h"
 #include "RCE_CAM.h"
 
 CODE_SECTION("==========================") ;
@@ -59,12 +60,15 @@ STATIC VOID                *g_apvBufferAddr[RCE_CAM_CAMERA_ALLOCATE_BUFFER_NUM] 
 STATIC UINT                 g_auiBufferSize[RCE_CAM_CAMERA_ALLOCATE_BUFFER_NUM] ; /* 4 x RCE_CAM_CAMERA_ALLOCATE_BUFFER_NUM Byte */
 
 /* 待编码缓存区 */
-UCHAR                       g_aucFrameBuffer[RCE_CAM_FRAME_BUFFER_SIZE] ;
+UCHAR                      *g_pucFrameBuffer ;
 UINT                        g_uiFrameBufferValid = 0 ;
 
 /* ISP */
 STATIC rk_aiq_static_info_t g_stAiqStaticInfo ;
 STATIC rk_aiq_sys_ctx_t    *g_pstAiqCtx ;
+
+/* 配置信息 */
+extern RCE_CONFIG_S         g_stRCEConfig ;
 
 CODE_SECTION("==========================") ;
 CODE_SECTION("==  模块内部函数        ==") ;
@@ -297,7 +301,7 @@ INT __RCE_CAM_GCP_QueryCameraResolution(VOID)
 
     /* 获取并打印摄像头支持的分辨率*/
     stFrameSize.index        = 0 ;
-    stFrameSize.pixel_format = RCE_CAM_CAMERA_OUTPUT_FMT ;
+    stFrameSize.pixel_format = V4L2_PIX_FMT_NV12 ;
     
     printf("--Frame resolution descriptor ----------------------------\n") ;
     
@@ -400,9 +404,9 @@ INT __RCE_CAM_SCP_SetCameraResolution(VOID)
 
     /* 设置输出格式 */
     stFormat.type                   = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ;
-    stFormat.fmt.pix_mp.width       = RCE_CAM_CAMERA_RESOLUTION_WIDTH ;
-    stFormat.fmt.pix_mp.height      = RCE_CAM_CAMERA_RESOLUTION_HEIGHT ;
-    stFormat.fmt.pix_mp.pixelformat = RCE_CAM_CAMERA_OUTPUT_FMT ;
+    stFormat.fmt.pix_mp.width       = g_stRCEConfig.usWidth ;
+    stFormat.fmt.pix_mp.height      = g_stRCEConfig.usHeight ;
+    stFormat.fmt.pix_mp.pixelformat = V4L2_PIX_FMT_NV12 ;
     stFormat.fmt.pix_mp.num_planes  = 1 ;
     
     iRetVal = ioctl(g_stCAMWorkarea.iCameraFile, VIDIOC_S_FMT, &stFormat) ;
@@ -457,12 +461,12 @@ INT __RCE_CAM_SCP_SetCameraResolution(VOID)
 *******************************************************************************/
 INT __RCE_CAM_SCP_SetCameraFPS(VOID)
 {
-#if 0 
+
     struct v4l2_streamparm stStreamParm ;
     INT                    iRetVal ;
-   
-    stStreamParm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ;
 
+    stStreamParm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE ;
+#if 0 
     /* 获取当前设置 */
     iRetVal = ioctl(g_stCAMWorkarea.iCameraFile, VIDIOC_G_PARM, &stStreamParm) ;
 
@@ -485,10 +489,11 @@ INT __RCE_CAM_SCP_SetCameraFPS(VOID)
                stStreamParm.parm.capture.timeperframe.denominator) ;
         printf("----------------------------------------------------------\n\n\n") ;
     }
-
+#endif
+#if 0
     /* 修改FPS */
     stStreamParm.parm.capture.timeperframe.numerator   = 1 ;
-    stStreamParm.parm.capture.timeperframe.denominator = RCE_CAM_CAMERA_OUTPUT_FPS ;
+    stStreamParm.parm.capture.timeperframe.denominator = g_stRCEConfig.uiFps ;
 
     iRetVal = ioctl(g_stCAMWorkarea.iCameraFile, VIDIOC_S_PARM, &stStreamParm) ;
 
@@ -498,7 +503,8 @@ INT __RCE_CAM_SCP_SetCameraFPS(VOID)
 
         return -1 ;
     }
-
+#endif
+#if 0
     /* 获取新设置 */
     iRetVal = ioctl(g_stCAMWorkarea.iCameraFile, VIDIOC_G_PARM, &stStreamParm) ;
 
@@ -846,7 +852,7 @@ INT __RCE_CAM_PCD_PrcessFrame(VOID)
         if(0 == g_uiFrameBufferValid)
         {
             /* 复制图像 */
-            memcpy(g_aucFrameBuffer, g_apvBufferAddr[stBuf.index], astPlanes[0].bytesused) ;
+            memcpy(g_pucFrameBuffer, g_apvBufferAddr[stBuf.index], astPlanes[0].bytesused) ;
 
             /* 设置标记，等待编码完成 */
             g_uiFrameBufferValid = 1 ;

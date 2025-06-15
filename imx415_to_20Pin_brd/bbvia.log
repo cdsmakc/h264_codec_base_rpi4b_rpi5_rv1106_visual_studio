@@ -1,0 +1,26 @@
+(---------------------------------------------------------------------)
+(                                                                     )
+(    Allegro Automatic B/B Via Creation                               )
+(                                                                     )
+(    Software Version : 17.4S032                                      )
+(    Date/Time        : Wed Jun 11 19:25:43 2025                      )
+(                                                                     )
+(---------------------------------------------------------------------)
+
+
+Via to be copied: Pvc024dc012
+Start subclass: TOP
+End subclass: BOTTOM
+Old drawing: E:/H264_codec_base_rpi4b_rv1106_visual_studio/imx415_to_20Pin_brd/#Taaaabg17032.tmp
+New drawing: E:/H264_codec_base_rpi4b_rv1106_visual_studio/imx415_to_20Pin_brd/#Taaaabg17032.tmp
+Vias added to physical constraint set: DEFAULT
+Only Create Vias From External to Internal Layers
+
+B/B Via TOP-BOTTOM created
+
+Number of padstacks created 1
+Number of existing padstacks that did not need to be modified: 0
+Number of existing padstacks that were modified: 0
+Number of existing padstacks that could not be modified: 0
+
+bbvia is complete.

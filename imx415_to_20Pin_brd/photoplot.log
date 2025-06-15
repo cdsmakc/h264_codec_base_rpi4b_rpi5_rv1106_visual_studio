@@ -1,0 +1,255 @@
+(---------------------------------------------------------------------)
+(                                                                     )
+(    ARTWORK LOG                                                      )
+(                                                                     )
+(    Drawing          : imx415_to_22pin.brd                           )
+(    Software Version : 17.4S032                                      )
+(    Date/Time        : Wed Jun 11 19:46:44 2025                      )
+(                                                                     )
+(---------------------------------------------------------------------)
+
+
+
+ ******************************************
+ WARNING: DRC OUT OF DATE on this layout.
+ ******************************************
+
+ ---- Photoplot outline rectangle not found; using drawing extents.
+
+
+
+Results from parameter file ...
+    DEVICE-TYPE           GERBER_RS274X
+    OUTPUT-UNITS          MM
+    FILM-SIZE             2400000 1600000
+    FORMAT                2.5
+    ABORT-ON-ERROR        NO
+    SCALE                 1
+    SUPPRESS-LEAD-ZEROES  YES
+    SUPPRESS-TRAIL-ZEROES NO
+    SUPPRESS-EQUAL        YES
+    UNDEF-APT-CONT        NO
+
+
+
+================================================================
+     PROCESSING FILM < Art_Top >
+     TO FILE < E:/H264_codec_base_rpi4b_rv1106_visual_studio/imx415_to_20Pin_brd/Art_Top.art > ...
+================================================================
+
+  FILM PARAMETERS :
+  ---------------------------------------------------------
+  Undefined line width                0.1524
+  Mirror code                         NONE
+  Rotate angle                        NONE
+  Offset x:                           0.0000
+  Offset y:                           0.0000
+  Plot negative                       NO
+  Suppress unconnected internal pads  NO
+  Draw holes only                     NO
+
+
+
+  APERTURES USED:
+  ---------------------------------------------------------
+  TYPE       SIZE/NAME                   ROT   MIRROR MODE 
+  ---------------------------------------------------------
+  CIRCLE     0.12700                                  DARK 
+  CIRCLE     0.15240                                  DARK 
+  CIRCLE     0.20000                                  DARK 
+  CIRCLE     0.30000                                  DARK 
+  CIRCLE     0.60960                                  DARK 
+  RECTANGLE  1.14300     x 1.27000       0.000 NO     DARK 
+  RECTANGLE  1.19380     x 0.30480       0.000 NO     DARK 
+  RECTANGLE  3.30200     x 2.10820       0.000 NO     DARK 
+
+     Art_Top created with warnings
+
+
+================================================================
+     PROCESSING FILM < Art_Btm >
+     TO FILE < E:/H264_codec_base_rpi4b_rv1106_visual_studio/imx415_to_20Pin_brd/Art_Btm.art > ...
+================================================================
+
+  FILM PARAMETERS :
+  ---------------------------------------------------------
+  Undefined line width                0.1524
+  Mirror code                         NONE
+  Rotate angle                        NONE
+  Offset x:                           0.0000
+  Offset y:                           0.0000
+  Plot negative                       NO
+  Suppress unconnected internal pads  NO
+  Draw holes only                     NO
+
+
+
+  APERTURES USED:
+  ---------------------------------------------------------
+  TYPE       SIZE/NAME                   ROT   MIRROR MODE 
+  ---------------------------------------------------------
+  CIRCLE     0.12700                                  DARK 
+  CIRCLE     0.15240                                  DARK 
+  CIRCLE     0.60960                                  DARK 
+
+     Art_Btm created with warnings
+
+
+================================================================
+     PROCESSING FILM < Outline >
+     TO FILE < E:/H264_codec_base_rpi4b_rv1106_visual_studio/imx415_to_20Pin_brd/Outline.art > ...
+================================================================
+
+  FILM PARAMETERS :
+  ---------------------------------------------------------
+  Undefined line width                0.1524
+  Mirror code                         NONE
+  Rotate angle                        NONE
+  Offset x:                           0.0000
+  Offset y:                           0.0000
+  Plot negative                       NO
+  Suppress unconnected internal pads  NO
+  Draw holes only                     NO
+
+
+
+  APERTURES USED:
+  ---------------------------------------------------------
+  TYPE       SIZE/NAME                   ROT   MIRROR MODE 
+  ---------------------------------------------------------
+  CIRCLE     0.15240                                  DARK 
+
+     Outline created with warnings
+
+
+================================================================
+     PROCESSING FILM < SilkscreenTop >
+     TO FILE < E:/H264_codec_base_rpi4b_rv1106_visual_studio/imx415_to_20Pin_brd/SilkscreenTop.art > ...
+================================================================
+
+  FILM PARAMETERS :
+  ---------------------------------------------------------
+  Undefined line width                0.1524
+  Mirror code                         NONE
+  Rotate angle                        NONE
+  Offset x:                           0.0000
+  Offset y:                           0.0000
+  Plot negative                       NO
+  Suppress unconnected internal pads  NO
+  Draw holes only                     NO
+
+
+
+  APERTURES USED:
+  ---------------------------------------------------------
+  TYPE       SIZE/NAME                   ROT   MIRROR MODE 
+  ---------------------------------------------------------
+  CIRCLE     0.02540                                  DARK 
+  CIRCLE     0.07620                                  DARK 
+  CIRCLE     0.12700                                  DARK 
+  CIRCLE     0.15240                                  DARK 
+  CIRCLE     0.17780                                  DARK 
+  CIRCLE     0.25400                                  DARK 
+  CIRCLE     0.50800                                  DARK 
+
+     SilkscreenTop created with warnings
+
+
+================================================================
+     PROCESSING FILM < SilkscreenBtm >
+     TO FILE < E:/H264_codec_base_rpi4b_rv1106_visual_studio/imx415_to_20Pin_brd/SilkscreenBtm.art > ...
+================================================================
+
+  FILM PARAMETERS :
+  ---------------------------------------------------------
+  Undefined line width                0.1524
+  Mirror code                         NONE
+  Rotate angle                        NONE
+  Offset x:                           0.0000
+  Offset y:                           0.0000
+  Plot negative                       NO
+  Suppress unconnected internal pads  NO
+  Draw holes only                     NO
+
+
+
+  APERTURES USED:
+  ---------------------------------------------------------
+  TYPE       SIZE/NAME                   ROT   MIRROR MODE 
+  ---------------------------------------------------------
+  CIRCLE     0.02540                                  DARK 
+  CIRCLE     0.15240                                  DARK 
+  CIRCLE     0.17780                                  DARK 
+  CIRCLE     0.25400                                  DARK 
+
+     SilkscreenBtm created with warnings
+
+
+================================================================
+     PROCESSING FILM < SoldermaskTop >
+     TO FILE < E:/H264_codec_base_rpi4b_rv1106_visual_studio/imx415_to_20Pin_brd/SoldermaskTop.art > ...
+================================================================
+
+  FILM PARAMETERS :
+  ---------------------------------------------------------
+  Undefined line width                0.1524
+  Mirror code                         NONE
+  Rotate angle                        NONE
+  Offset x:                           0.0000
+  Offset y:                           0.0000
+  Plot negative                       NO
+  Suppress unconnected internal pads  NO
+  Draw holes only                     NO
+
+
+
+  APERTURES USED:
+  ---------------------------------------------------------
+  TYPE       SIZE/NAME                   ROT   MIRROR MODE 
+  ---------------------------------------------------------
+  CIRCLE     0.15240                                  DARK 
+  RECTANGLE  1.29540     x 1.42240       0.000 NO     DARK 
+  RECTANGLE  1.34620     x 0.45720       0.000 NO     DARK 
+  RECTANGLE  3.45440     x 2.26060       0.000 NO     DARK 
+
+     SoldermaskTop created with warnings
+
+
+================================================================
+     PROCESSING FILM < SoldermaskBtm >
+     TO FILE < E:/H264_codec_base_rpi4b_rv1106_visual_studio/imx415_to_20Pin_brd/SoldermaskBtm.art > ...
+================================================================
+
+  FILM PARAMETERS :
+  ---------------------------------------------------------
+  Undefined line width                0.1524
+  Mirror code                         NONE
+  Rotate angle                        NONE
+  Offset x:                           0.0000
+  Offset y:                           0.0000
+  Plot negative                       NO
+  Suppress unconnected internal pads  NO
+  Draw holes only                     NO
+
+
+
+  APERTURES USED:
+  ---------------------------------------------------------
+  TYPE       SIZE/NAME                   ROT   MIRROR MODE 
+  ---------------------------------------------------------
+  CIRCLE     0.15240                                  DARK 
+
+     SoldermaskBtm created with warnings
+
+
+------------------------------------------------------
+ SUMMARY:
+        Art_Top created with warnings
+        Art_Btm created with warnings
+        Outline created with warnings
+        SilkscreenTop created with warnings
+        SilkscreenBtm created with warnings
+        SoldermaskTop created with warnings
+        SoldermaskBtm created with warnings
+
+ ARTWORK had warnings
